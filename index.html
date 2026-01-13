@@ -85,6 +85,51 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
+        // ==========================
+        // Telegram configuration
+        // ==========================
+        // УВАГА: Токен у фронтенді видно всім відвідувачам сайту.
+        // Для продакшену потрібно робити через бекенд/проксі.
+        const TELEGRAM_BOT_TOKEN = '8313180201:AAGqKJRon3jkB2SRQKpk-MAS3GzyrPZcm-8';
+        const TELEGRAM_CHAT_ID = '8523361908'; // ваш User ID (зазвичай підходить як chat_id для приватного чату)
+        const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text || '').replace(/[&<>"']/g, (m) => map[m]);
+        }
+
+        async function sendTelegramMessage({ name, email, message }) {
+            const telegramMessage =
+                `🆕 <b>НОВЕ ПОВІДОМЛЕННЯ З САЙТУ</b>\n\n` +
+                `👤 <b>Name:</b> ${escapeHtml(name)}\n` +
+                `✉️ <b>Email:</b> ${escapeHtml(email)}\n` +
+                `💬 <b>Message:</b>\n${escapeHtml(message)}\n\n` +
+                `⏰ <b>Time:</b> ${escapeHtml(new Date().toLocaleString('uk-UA'))}`;
+
+            const res = await fetch(`${TELEGRAM_API_URL}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: telegramMessage,
+                    parse_mode: 'HTML'
+                })
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (!data.ok) {
+                throw new Error(data.description || 'Failed to send message to Telegram');
+            }
+            return data;
+        }
+
         // --- Icons (Inline SVG for reliability) ---
         const Icons = {
             Lotus: () => (
@@ -220,7 +265,7 @@
                 {/* Background Image with Overlay */}
                 <div className="absolute inset-0 z-0">
                     <img 
-                        src="/hero-background.jpg" 
+                        src="https://images.unsplash.com/photo-1552196563-55cd4e45efb3?q=80&w=2526&auto=format&fit=crop" 
                         alt="Yulia Yoga Pose" 
                         className="w-full h-full object-cover"
                     />
@@ -248,7 +293,7 @@
                     <div className="w-full md:w-1/2 relative">
                         <div className="relative z-10">
                             <img 
-                                src="/yulia-portrait.jpg" 
+                                src="https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?q=80&w=2000&auto=format&fit=crop" 
                                 alt="Yulia Portrait" 
                                 className="w-full h-[600px] object-cover shadow-lg"
                             />
@@ -267,7 +312,7 @@
                             Now, with over 5 years of teaching experience and certifications in Divya Yoga and Hatha, I guide others to find that same connection. My approach combines precise alignment with the fluid freedom of breath, creating a practice that is both grounding and liberating.
                         </p>
                         <div className="flex items-center space-x-4">
-                           <img src="/signature.png" alt="Signature" className="h-12 opacity-60" />
+                           <img src="https://signature-generator.com/wp-content/uploads/2022/02/sign-10-1.png" alt="Signature" className="h-12 opacity-60" />
                         </div>
                     </div>
                 </div>
@@ -325,7 +370,7 @@
                     {/* Online Private Sessions */}
                     <div className="group bg-white p-8 hover:shadow-xl transition-all duration-500 flex flex-col">
                         <div className="h-64 mb-8 overflow-hidden">
-                            <img src="/private-yoga.jpg" alt="Private Yoga" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                            <img src="images/private-yoga.jpg" alt="Private Yoga" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                         </div>
                         <h3 className="text-2xl font-serif mb-2">Online Private Sessions</h3>
                         <p className="text-yoga-taupe italic mb-4 font-serif">1-on-1 Guidance</p>
@@ -340,7 +385,7 @@
                     {/* Online Group Classes */}
                     <div className="group bg-white p-8 hover:shadow-xl transition-all duration-500 flex flex-col">
                         <div className="h-64 mb-8 overflow-hidden">
-                            <img src="/group-class.jpg" alt="Group Class" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                            <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=2070&auto=format&fit=crop" alt="Group Class" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                         </div>
                         <h3 className="text-2xl font-serif mb-2">Online Group Classes</h3>
                         <p className="text-yoga-taupe italic mb-4 font-serif">Community Flow</p>
@@ -355,7 +400,7 @@
                     {/* Retreats */}
                     <div className="group bg-white p-8 hover:shadow-xl transition-all duration-500 flex flex-col">
                         <div className="h-64 mb-8 overflow-hidden">
-                            <img src="/retreats.jpg" alt="Retreats" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                            <img src="https://images.unsplash.com/photo-1591228127791-8e2eaef098d3?q=80&w=2070&auto=format&fit=crop" alt="Retreats" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                         </div>
                         <h3 className="text-2xl font-serif mb-2">Retreats</h3>
                         <p className="text-yoga-taupe italic mb-4 font-serif">Immersive Wellness</p>
@@ -429,146 +474,6 @@
             </section>
         );
 
-        // --- New Booking Form Component ---
-        const BookingForm = () => {
-             const [formData, setFormData] = useState({
-                name: '',
-                date: '',
-                time: '',
-                classType: 'Online Group Class',
-                yogaStyle: 'Hatha Yoga',
-                contact: '' // Phone or username
-            });
-
-            const handleChange = (e) => {
-                const { name, value } = e.target;
-                setFormData(prev => ({ ...prev, [name]: value }));
-            };
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                // Simulation of booking logic
-                alert(`Booking Request for ${formData.name}\nClass: ${formData.classType} (${formData.yogaStyle})\nDate: ${formData.date} at ${formData.time}`);
-            };
-
-            return (
-                <section id="booking" className="py-24 px-6 container mx-auto">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="text-center mb-16">
-                            <span className="text-yoga-taupe uppercase tracking-widest text-sm font-bold">Reserve Your Mat</span>
-                            <h2 className="text-4xl md:text-5xl font-serif mt-4 text-yoga-charcoal">Book a Class</h2>
-                        </div>
-
-                        <div className="bg-white shadow-xl p-8 md:p-12">
-                            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                
-                                {/* Personal Details */}
-                                <div className="space-y-6">
-                                    <h3 className="text-lg font-serif text-yoga-taupe uppercase tracking-widest">Your Details</h3>
-                                    <div>
-                                        <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Full Name</label>
-                                        <input 
-                                            type="text" 
-                                            name="name"
-                                            required
-                                            value={formData.name}
-                                            onChange={handleChange}
-                                            className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe bg-transparent transition-colors" 
-                                            placeholder="Jane Doe" 
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">WhatsApp / Phone</label>
-                                        <input 
-                                            type="text" 
-                                            name="contact"
-                                            required
-                                            value={formData.contact}
-                                            onChange={handleChange}
-                                            className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe bg-transparent transition-colors" 
-                                            placeholder="write your number" 
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Class Details */}
-                                <div className="space-y-6">
-                                     <h3 className="text-lg font-serif text-yoga-taupe uppercase tracking-widest">Class Preferences</h3>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Date</label>
-                                            <input 
-                                                type="date" 
-                                                name="date"
-                                                required
-                                                value={formData.date}
-                                                onChange={handleChange}
-                                                className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe bg-transparent text-gray-700" 
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Time</label>
-                                            <input 
-                                                type="time" 
-                                                name="time"
-                                                required
-                                                value={formData.time}
-                                                onChange={handleChange}
-                                                className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe bg-transparent text-gray-700" 
-                                            />
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Class Type</label>
-                                        <select 
-                                            name="classType"
-                                            value={formData.classType}
-                                            onChange={handleChange}
-                                            className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe bg-transparent text-gray-700"
-                                        >
-                                            <option>Online Group Class</option>
-                                            <option>Online Private Session</option>
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Yoga Style</label>
-                                        <select 
-                                            name="yogaStyle"
-                                            value={formData.yogaStyle}
-                                            onChange={handleChange}
-                                            className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe bg-transparent text-gray-700"
-                                        >
-                                            <option>Hatha Yoga</option>
-                                            <option>Divya Yoga</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                {/* Actions */}
-                                <div className="md:col-span-2 pt-6 flex flex-col md:flex-row items-center gap-6 border-t border-gray-100 mt-4">
-                                    <button type="submit" className="w-full md:w-auto px-10 py-4 bg-yoga-charcoal text-white uppercase tracking-widest text-xs hover:bg-yoga-taupe transition-colors">
-                                        Confirm Booking
-                                    </button>
-                                    <span className="text-gray-400 text-sm font-serif italic">or pay securely with</span>
-                                    <a 
-                                        href="https://www.paypal.com/" 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-2 px-8 py-3 bg-[#0070BA] text-white rounded-full hover:bg-[#003087] transition-colors font-bold text-sm"
-                                    >
-                                        <Icons.PayPal />
-                                        <span>PayPal</span>
-                                    </a>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </section>
-            );
-        };
-
         const Testimonials = () => {
             const testimonials = [
                 {
@@ -624,51 +529,115 @@
             );
         };
 
-        const Contact = () => (
-            <section id="contact" className="py-24 px-6 container mx-auto">
-                <div className="flex flex-col md:flex-row max-w-5xl mx-auto bg-white shadow-xl overflow-hidden">
-                    <div className="w-full md:w-1/2 p-12 bg-yoga-bg-alt flex flex-col justify-center">
-                        <h2 className="text-4xl font-serif mb-6">Get in Touch</h2>
-                        <p className="text-gray-600 font-light mb-8">
-                            Have a question about a class or want to book a private session? I'd love to hear from you.
-                        </p>
-                        <div className="space-y-4">
-                            <div className="flex flex-col">
-                                <span className="text-xs uppercase tracking-widest text-yoga-taupe mb-1">Email</span>
-                                <a href="mailto:yoga.online55@gmail.com" className="text-lg hover:text-yoga-taupe transition-colors">yoga.online55@gmail.com</a>
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-xs uppercase tracking-widest text-yoga-taupe mb-1">Studio</span>
-                                <span className="text-lg">Lviv, Ukraine (Available Online)</span>
-                            </div>
-                            <div className="flex space-x-4 mt-6 pt-6 border-t border-gray-200">
-                                <a href="#" className="text-yoga-charcoal hover:text-yoga-taupe"><Icons.WhatsApp /></a>
+        // ==========================
+        // Contact (text-only, Telegram)
+        // ==========================
+        const Contact = () => {
+            const [isSending, setIsSending] = useState(false);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                if (isSending) return;
+
+                const form = e.currentTarget;
+                const submitButton = form.querySelector('button[type="submit"]');
+                const originalButtonText = submitButton ? submitButton.innerHTML : 'Send Message';
+
+                const name = form.elements.name?.value?.trim() || '';
+                const email = form.elements.email?.value?.trim() || '';
+                const message = form.elements.message?.value?.trim() || '';
+
+                setIsSending(true);
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = 'Відправка...';
+                }
+
+                try {
+                    await sendTelegramMessage({ name, email, message });
+
+                    alert('✅ Дякуємо! Ваш запит відправлено.');
+                    form.reset();
+                } catch (error) {
+                    console.error('Error sending to Telegram:', error);
+                    alert('❌ Помилка відправки. Якщо не відправляється — це може бути CORS. У такому разі потрібен бекенд/проксі.');
+                } finally {
+                    setIsSending(false);
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = originalButtonText;
+                    }
+                }
+            };
+
+            return (
+                <section id="contact" className="py-24 px-6 container mx-auto">
+                    <div className="flex flex-col md:flex-row max-w-5xl mx-auto bg-white shadow-xl overflow-hidden">
+                        <div className="w-full md:w-1/2 p-12 bg-yoga-bg-alt flex flex-col justify-center">
+                            <h2 className="text-4xl font-serif mb-6">Get in Touch</h2>
+                            <p className="text-gray-600 font-light mb-8">
+                                Have a question about a class or want to book a private session? I'd love to hear from you.
+                            </p>
+                            <div className="space-y-4">
+                                <div className="flex flex-col">
+                                    <span className="text-xs uppercase tracking-widest text-yoga-taupe mb-1">Email</span>
+                                    <a href="mailto:yoga.online55@gmail.com" className="text-lg hover:text-yoga-taupe transition-colors">yoga.online55@gmail.com</a>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs uppercase tracking-widest text-yoga-taupe mb-1">Studio</span>
+                                    <span className="text-lg">Lviv, Ukraine (Available Online)</span>
+                                </div>
+                                <div className="flex space-x-4 mt-6 pt-6 border-t border-gray-200">
+                                    <a href="#" className="text-yoga-charcoal hover:text-yoga-taupe"><Icons.WhatsApp /></a>
+                                </div>
                             </div>
                         </div>
+                        
+                        <div className="w-full md:w-1/2 p-12">
+                            {/* ВАЖЛИВО: тут onSubmit тепер викликає handleSubmit */}
+                            <form className="space-y-6" onSubmit={handleSubmit}>
+                                <div>
+                                    <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Name</label>
+                                    <input
+                                        name="name"
+                                        type="text"
+                                        className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe transition-colors bg-transparent"
+                                        placeholder="Your Name"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Email</label>
+                                    <input
+                                        name="email"
+                                        type="email"
+                                        className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe transition-colors bg-transparent"
+                                        placeholder="your@email.com"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Message</label>
+                                    <textarea
+                                        name="message"
+                                        rows="4"
+                                        className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe transition-colors bg-transparent resize-none"
+                                        placeholder="How can I help you?"
+                                        required
+                                    ></textarea>
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="mt-4 px-8 py-3 bg-yoga-taupe text-white uppercase tracking-widest text-xs hover:bg-yoga-charcoal transition-colors"
+                                >
+                                    Send Message
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                    
-                    <div className="w-full md:w-1/2 p-12">
-                        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-                            <div>
-                                <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Name</label>
-                                <input type="text" className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe transition-colors bg-transparent" placeholder="Your Name" />
-                            </div>
-                            <div>
-                                <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Email</label>
-                                <input type="email" className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe transition-colors bg-transparent" placeholder="your@email.com" />
-                            </div>
-                            <div>
-                                <label className="block text-xs uppercase tracking-widest text-gray-500 mb-2">Message</label>
-                                <textarea rows="4" className="w-full border-b border-gray-300 py-2 focus:outline-none focus:border-yoga-taupe transition-colors bg-transparent resize-none" placeholder="How can I help you?"></textarea>
-                            </div>
-                            <button className="mt-4 px-8 py-3 bg-yoga-taupe text-white uppercase tracking-widest text-xs hover:bg-yoga-charcoal transition-colors">
-                                Send Message
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </section>
-        );
+                </section>
+            );
+        };
 
         const WhatsAppButton = () => (
             <a 
@@ -705,7 +674,6 @@
                     <Philosophy />
                     <Offerings />
                     <PriceList />
-                    <BookingForm />
                     <Testimonials />
                     <Contact />
                     <Footer />
